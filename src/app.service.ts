@@ -45,7 +45,7 @@ export class AppService implements OnApplicationBootstrap {
   }
 
   get timeout() {
-    return Number(this.config.get<string>('BROWSER_TIMEOUT', '3000'));
+    return Number(this.config.get<string>('BROWSER_TIMEOUT', '30000'));
   }
 
   getHello(): string {
