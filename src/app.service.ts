@@ -6,6 +6,7 @@ import { ElementHandle, Page } from 'playwright';
 @Injectable()
 export class AppService implements OnApplicationBootstrap {
   private logger = new Logger(AppService.name);
+  private waitAfterConnectedInSec = 5;
 
   constructor(
     private readonly config: ConfigService,
@@ -25,11 +26,19 @@ export class AppService implements OnApplicationBootstrap {
         waitUntil: 'domcontentloaded',
         timeout: this.timeout,
       });
+      this.logger.debug(
+        `wait for ${
+          this.waitAfterConnectedInSec
+        }s after success load ${page.url()}`,
+      );
       const res = await Promise.all([
         page.waitForResponse(
           (res) => res.url().includes('github') && res.status() === 200,
         ),
       ]);
+      await new Promise((res) =>
+        setTimeout(res, this.waitAfterConnectedInSec * 1000),
+      );
 
       if (res[0].status() === 200) {
         const containers = await page.$$(containerPattern);
