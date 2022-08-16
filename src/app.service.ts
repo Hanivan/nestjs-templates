@@ -1,7 +1,7 @@
 import { PlaywrightService } from '@libs/commons/playwright/playwright.service';
 import { Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { Page } from 'playwright';
+import { ElementHandle, Page } from 'playwright';
 
 @Injectable()
 export class AppService implements OnApplicationBootstrap {
@@ -14,9 +14,10 @@ export class AppService implements OnApplicationBootstrap {
 
   async onApplicationBootstrap() {
     const url = 'https://hanivan.my.id';
-    const pattern =
-      '//section/p[@class="hidden lg:block" and normalize-space()]';
-    let page: Page = await this.playwright.createPage();
+    const containerPattern = 'xpath=//section';
+    const contentPattern =
+      './p[@class="hidden lg:block"]/text()[normalize-space()]';
+    const page: Page = await this.playwright.createPage();
 
     this.logger.log(`Start scrape from ${url}`);
     try {
@@ -31,9 +32,20 @@ export class AppService implements OnApplicationBootstrap {
       ]);
 
       if (res[0].status() === 200) {
-        const node = await page.$(`xpath=${pattern}`);
-        if (node && !page.isClosed()) {
-          console.log(await node.innerText());
+        const containers = await page.$$(containerPattern);
+
+        if (containers.length > 0) {
+          console.log(
+            `Found ${containers.length} containers, scraping can start`,
+          );
+          for (const container of containers) {
+            const data = await this.getXpathContent(
+              container,
+              contentPattern,
+              'text',
+            );
+            data.forEach((d) => console.log(d));
+          }
         }
       }
     } catch (error) {
@@ -42,6 +54,40 @@ export class AppService implements OnApplicationBootstrap {
       }
       throw error;
     }
+  }
+
+  private async getXpathContent(
+    containerContext: ElementHandle<SVGElement | HTMLElement>,
+    pattern: string,
+    returnType: 'text' | 'html',
+  ) {
+    if (!containerContext) {
+      return [];
+    }
+
+    const evaluateParam: [string, 'text' | 'html'] = [pattern, returnType];
+    const data = await containerContext.evaluate(
+      (context, [pattern, returnType]) => {
+        const getContent = (el: Node | Element) =>
+          returnType === 'text' ? el.nodeValue : (el as Element).innerHTML;
+        const vals = document.evaluate(
+          pattern as string,
+          context,
+          null,
+          XPathResult.ORDERED_NODE_SNAPSHOT_TYPE,
+          null,
+        );
+        const result = [];
+        if (vals.snapshotLength > 0) {
+          for (let i = 0; i < vals.snapshotLength; i++) {
+            result.push(vals.snapshotItem(i));
+          }
+        }
+        return result.map(getContent);
+      },
+      evaluateParam,
+    );
+    return data;
   }
 
   get timeout() {
