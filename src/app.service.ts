@@ -54,6 +54,9 @@ export class AppService implements OnApplicationBootstrap {
               'text',
             );
             data.forEach((d) => console.log(d));
+            if (page && !page.isClosed()) {
+              await page.close();
+            }
           }
         }
       }
