@@ -7,6 +7,7 @@ import { ElementHandle, Page } from 'playwright';
 export class AppService implements OnApplicationBootstrap {
   private logger = new Logger(AppService.name);
   private waitAfterConnectedInSec = 5;
+  private readonly maxRetry = 3;
 
   constructor(
     private readonly config: ConfigService,
@@ -31,20 +32,19 @@ export class AppService implements OnApplicationBootstrap {
           this.waitAfterConnectedInSec
         }s after success load ${page.url()}`,
       );
-      const res = await Promise.all([
-        page.waitForResponse(
-          (res) => res.url().includes('github') && res.status() === 200,
-        ),
-      ]);
-      await new Promise((res) =>
-        setTimeout(res, this.waitAfterConnectedInSec * 1000),
-      );
+      // await new Promise((res) =>
+      //   setTimeout(res, this.waitAfterConnectedInSec * 1000),
+      // );
 
-      if (res[0].status() === 200) {
+      await this.challangeCloudflareByWaiting(page);
+
+      const res = await this.waitForResponse(page, 'github');
+
+      if (res) {
         const containers = await page.$$(containerPattern);
 
         if (containers.length > 0) {
-          console.log(
+          this.logger.debug(
             `Found ${containers.length} containers, scraping can start`,
           );
           for (const container of containers) {
@@ -56,16 +56,83 @@ export class AppService implements OnApplicationBootstrap {
             data.forEach((d) => console.log(d));
             if (page && !page.isClosed()) {
               await page.close();
+              this.logger.log('Scrape done, page closed');
             }
           }
         }
+      } else {
+        this.logger.error('Container not found');
       }
     } catch (error) {
       if (page && !page.isClosed()) {
         await page.close();
+        this.logger.error('Something went wrong, verbose close page');
       }
       throw error;
     }
+  }
+
+  private async waitForResponse(page: Page, url: string) {
+    this.logger.debug(`Waiting for response from ${url}`);
+
+    await page
+      .waitForRequest((response) => response.url().includes(url), {
+        timeout: 3000,
+      })
+      .catch((err) => {
+        this.logger.log(`All request from ${url} done`);
+      });
+
+    return page.on('request', async (req) => {
+      if (req.url().includes(url)) {
+        return await Promise.all([
+          page.waitForResponse(
+            (res) => res.url().includes(url) && res.status() === 200,
+          ),
+        ]).catch((err) => {});
+      }
+    });
+  }
+
+  private async getRequest(page: Page) {
+    page.on('request', (request) =>
+      console.log('>>', request.method(), request.url()),
+    );
+    page.on('response', (response) =>
+      console.log('<<', response.status(), response.url()),
+    );
+  }
+
+  private async challangeCloudflareByWaiting(page: Page) {
+    let pageTitle: string;
+    const cloudflareTitle = 'Just a moment...';
+    const waitCloudflare = 10;
+    let isCloudflare = false;
+    let iteration = 0;
+
+    try {
+      do {
+        pageTitle = await page.title();
+        ++iteration;
+
+        if (iteration > this.maxRetry) {
+          return null;
+        }
+
+        if (pageTitle !== cloudflareTitle) {
+          this.logger.log('Cloudflare challenge passed');
+          return !isCloudflare;
+        }
+
+        this.logger.debug(
+          `Waiting for cloudflare challenge... [${iteration}/${this.maxRetry}] by ${waitCloudflare}s`,
+        );
+        await new Promise((res) => setTimeout(res, waitCloudflare * 1000));
+      } while (pageTitle === cloudflareTitle);
+    } catch (error) {
+      throw error;
+    }
+    return false;
   }
 
   private async getXpathContent(
