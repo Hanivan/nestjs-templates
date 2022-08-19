@@ -61,7 +61,10 @@ export class AppService implements OnApplicationBootstrap {
           }
         }
       } else {
-        this.logger.error('Container not found');
+        if (page && !page.isClosed()) {
+          await page.close();
+          this.logger.error('Container not found');
+        }
       }
     } catch (error) {
       if (page && !page.isClosed()) {
