@@ -32,9 +32,9 @@ export class AppService implements OnApplicationBootstrap {
           this.waitAfterConnectedInSec
         }s after success load ${page.url()}`,
       );
-      // await new Promise((res) =>
-      //   setTimeout(res, this.waitAfterConnectedInSec * 1000),
-      // );
+      await new Promise((res) =>
+        setTimeout(res, this.waitAfterConnectedInSec * 1000),
+      );
 
       await this.challangeCloudflareByWaiting(page);
 
