@@ -7,6 +7,7 @@ const redisProvider = {
   useFactory(config: ConfigService) {
     return new IORedis({
       host: config.get('REDIS_HOST', 'localhost'),
+      password: config.get('REDIS_PASSWORD', ''),
       port: Number(config.get('REDIS_PORT', 6379)),
       db: Number(config.get('REDIS_DB', 0)),
     });
