@@ -672,10 +672,10 @@
     tslib "2.4.0"
     uuid "9.0.0"
 
-"@nestjs/core@^9.0.0":
-  version "9.0.9"
-  resolved "https://registry.yarnpkg.com/@nestjs/core/-/core-9.0.9.tgz#4582d8ea1d7bf99faac4b6b5208150c2addab458"
-  integrity sha512-wqr/Nqz6U4B2MqbzD6b6eRNgJeZB9FvUQsgHtsTA8g/77ONyLMJcANPoYQcxu39iWCbd4JlIkZ2vXbCeubJaeA==
+"@nestjs/core@^9.1.6":
+  version "9.1.6"
+  resolved "https://registry.yarnpkg.com/@nestjs/core/-/core-9.1.6.tgz#b73a453a40470a1456fc404384b195e816da0828"
+  integrity sha512-B52nYYTDSH72f1DU0G14NQSPCviXRE9fCp2/gUHuWIfVfBwcmVBAxVgyB/jAIUAhhj1f5/2odwUiw194xYtRRA==
   dependencies:
     "@nuxtjs/opencollective" "0.3.2"
     fast-safe-stringify "2.1.1"
@@ -683,7 +683,7 @@
     object-hash "3.0.0"
     path-to-regexp "3.2.0"
     tslib "2.4.0"
-    uuid "8.3.2"
+    uuid "9.0.0"
 
 "@nestjs/platform-express@^9.0.0":
   version "9.0.9"
@@ -4492,11 +4492,6 @@ utils-merge@1.0.1:
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/utils-merge/-/utils-merge-1.0.1.tgz#9f95710f50a267947b2ccc124741c1028427e713"
   integrity sha512-pMZTvIkT1d+TFGvDOqodOclx0QWkkgi6Tdoa8gC8ffGAAqz9pzPTZWAybbsHHoED/ztMtkv/VoYTYyShUn81hA==
-
-uuid@8.3.2:
-  version "8.3.2"
-  resolved "https://registry.yarnpkg.com/uuid/-/uuid-8.3.2.tgz#80d5b5ced271bb9af6c445f21a1a04c606cefbe2"
-  integrity sha512-+NYs2QeMWy+GWFOEm9xnn6HCDp0l7QBD7ml8zLUmJ+93Q5NF0NocErnwkTkXVFNiX3/fpC6afS8Dhb/gz7R7eg==
 
 uuid@9.0.0:
   version "9.0.0"
