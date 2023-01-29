@@ -5,9 +5,11 @@ import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
 import { AccessTokenGuard } from './guards';
 import { PrismaModule } from './prisma/prisma.module';
+import { CaslModule } from './casl/casl.module';
+import { MediaModule } from './media/media.module';
 
 @Module({
-  imports: [AuthModule, PrismaModule],
+  imports: [AuthModule, PrismaModule, CaslModule, MediaModule],
   controllers: [AppController],
   providers: [
     AppService,

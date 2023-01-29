@@ -1,9 +1,14 @@
-import { ForbiddenException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+} from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { AuthDto } from './dto';
 import * as bcrypt from 'bcrypt';
 import { Tokens } from './types';
 import { JwtService } from '@nestjs/jwt';
+import { Objects, User, Permissions } from '@prisma/client';
 
 @Injectable()
 export class AuthService {
@@ -15,9 +20,15 @@ export class AuthService {
   async signupLocal(payload: AuthDto): Promise<Tokens> {
     const hash = await this.hashData(payload.password);
     const newUser = await this.prisma.user.create({
-      data: { email: payload.email, hash },
+      data: { email: payload.email, hash, role_id: payload.role_id },
     });
-    const tokens = await this.getTokens(newUser.id, newUser.email);
+    const [permissions, objects] = await this.getPermissionUser(newUser);
+    const tokens = await this.getTokens(
+      newUser.id,
+      newUser.email,
+      permissions,
+      objects,
+    );
     await this.updateRefreshTokenHash(newUser.id, tokens.refresh_token);
 
     return tokens;
@@ -31,8 +42,14 @@ export class AuthService {
 
     const passwordMatches = await bcrypt.compare(payload.password, user.hash);
     if (!passwordMatches) throw new ForbiddenException('access denied');
+    const [permissions, objects] = await this.getPermissionUser(user);
 
-    const tokens = await this.getTokens(user.id, user.email);
+    const tokens = await this.getTokens(
+      user.id,
+      user.email,
+      permissions,
+      objects,
+    );
     await this.updateRefreshTokenHash(user.id, tokens.refresh_token);
 
     return tokens;
@@ -56,22 +73,62 @@ export class AuthService {
     );
     if (!refreshTokenMatches) throw new ForbiddenException('access denied');
 
-    const tokens = await this.getTokens(user.id, user.email);
+    const [permissions, objects] = await this.getPermissionUser(user);
+    const tokens = await this.getTokens(
+      user.id,
+      user.email,
+      permissions,
+      objects,
+    );
     await this.updateRefreshTokenHash(user.id, tokens.refresh_token);
 
     return tokens;
+  }
+
+  async getPermissionUser(
+    user: User,
+  ): Promise<[Partial<Permissions>[], Partial<Objects>[]]> {
+    let permissionId: number[] = [];
+    const rolePermissions = await this.prisma.rolePermission.findMany({
+      where: { role_id: user.role_id },
+    });
+    if (!rolePermissions.length)
+      throw new ForbiddenException('role permission not found');
+    rolePermissions.map((rp) => permissionId.push(rp.permission_id));
+
+    const permissions = await this.prisma.permissions.findMany({
+      where: { id: { in: permissionId } },
+      select: { action: true, object_id: true, active: true },
+    });
+    if (!permissions.length)
+      throw new ForbiddenException('permission not found');
+
+    const objects = await this.prisma.objects.findMany({
+      where: { id: permissions[0].object_id },
+      select: { name: true },
+    });
+    if (!objects.length) throw new ForbiddenException('object not found');
+
+    return [permissions, objects];
   }
 
   async hashData(data: string) {
     return bcrypt.hash(data, 10);
   }
 
-  async getTokens(userId: number, email: string): Promise<Tokens> {
+  async getTokens(
+    userId: number,
+    email: string,
+    permissions: Partial<Permissions>[],
+    objects: Partial<Objects>[],
+  ): Promise<Tokens> {
     const [accessToken, refreshToken] = await Promise.all([
       this.jwtService.signAsync(
         {
           sub: userId,
           email,
+          permissions,
+          objects,
         },
         {
           secret: 'access-secret',
@@ -82,6 +139,8 @@ export class AuthService {
         {
           sub: userId,
           email,
+          role: null,
+          roleCan: null,
         },
         {
           secret: 'refresh-secret',

@@ -15,8 +15,40 @@ model User {
   email         String   @unique
   hash          String
   refresh_token String?
+  role_id       Int
   created_at    DateTime @default(now())
   updated_at    DateTime @updatedAt
 
   @@map("users")
+}
+
+model Roles {
+  id   Int    @id @default(autoincrement())
+  name String
+
+  @@map("roles")
+}
+
+model Permissions {
+  id        Int    @id @default(autoincrement())
+  action    String
+  object_id Int
+  active    Int
+
+  @@map("permissions")
+}
+
+model RolePermission {
+  id            Int @id @default(autoincrement())
+  role_id       Int
+  permission_id Int
+
+  @@map("role_permissions")
+}
+
+model Objects {
+  id   Int    @id @default(autoincrement())
+  name String
+
+  @@map("objects")
 }
