@@ -19,9 +19,9 @@ yarn
 mysql -uroot -p 3306 YOUR_DB_NAME < test-db.sql
 ```
 
-1. Makesure redis service is installed on your system
+4. Makesure redis service is installed on your system
 
-2. Happy Coding!
+5. Happy Coding!
 
 ## Thanks To
 
