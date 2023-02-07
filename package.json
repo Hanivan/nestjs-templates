@@ -8,7 +8,7 @@
   "scripts": {
     "prebuild": "rimraf dist",
     "build": "nest build",
-    "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
+    "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\" \"libs/**/*.ts\"",
     "start": "nest start",
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
@@ -22,11 +22,16 @@
   },
   "dependencies": {
     "@nestjs/common": "^9.2.1",
+    "@nestjs/config": "^2.3.0",
     "@nestjs/core": "^9.2.1",
     "@nestjs/platform-express": "^9.2.1",
+    "@nestjs/typeorm": "^9.0.1",
+    "mysql2": "^3.1.0",
+    "redis": "^4.6.4",
     "reflect-metadata": "^0.1.13",
     "rimraf": "^4.1.1",
-    "rxjs": "^7.8.0"
+    "rxjs": "^7.8.0",
+    "typeorm": "^0.3.11"
   },
   "devDependencies": {
     "@nestjs/cli": "^9.1.8",
@@ -57,7 +62,7 @@
       "json",
       "ts"
     ],
-    "rootDir": "src",
+    "rootDir": ".",
     "testRegex": ".*\\.spec\\.ts$",
     "transform": {
       "^.+\\.(t|j)s$": "ts-jest"
@@ -65,7 +70,14 @@
     "collectCoverageFrom": [
       "**/*.(t|j)s"
     ],
-    "coverageDirectory": "../coverage",
-    "testEnvironment": "node"
+    "coverageDirectory": "./coverage",
+    "testEnvironment": "node",
+    "roots": [
+      "<rootDir>/src/",
+      "<rootDir>/libs/"
+    ],
+    "moduleNameMapper": {
+      "^@libs/commons(|/.*)$": "<rootDir>/libs/commons/src/$1"
+    }
   }
 }
