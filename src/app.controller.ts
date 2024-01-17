@@ -9,4 +9,14 @@ export class AppController {
   getHello(): string {
     return this.appService.getHello();
   }
+
+  // @Get('queue/animal')
+  // handleQueueAnimal() {
+  //   return this.appService.sendQueueAnimal();
+  // }
+
+  // @Get('event/animal')
+  // handleEventAnimal() {
+  //   return this.appService.sendEventAnimal();
+  // }
 }
